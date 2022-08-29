@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+
+{% block title %}
+Домашняя страница
+{% endblock %}
+
+
+{% block content %}
+    <h1>Домашняя страница</h1>
+        {% with messages = get_flashed_messages() %}  
+            {% if messages %}  
+                {% for message in messages %}  
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}  
+            {% endif %}  
+        {% endwith %}  
+    <h3>Вы можете выбрать одну из функций:</h3>
+    <ul>
+        <li><a href="/import_csv">Ипортировать CSV-файл</a></li>
+        <li><a href="/dashboard">Сгенерировать отчет</a></li>
+    </ul>
+{% endblock %}
