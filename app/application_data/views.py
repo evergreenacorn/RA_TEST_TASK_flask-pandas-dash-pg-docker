@@ -15,7 +15,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in current_app.config['ALLOWED_EXTENSIONS']
 
 def index():
-    """ Обработчик загрузки домашней страницы"""
+    """Обработчик загрузки домашней страницы"""
     return render_template('index.html')
 
 def _import_secondary_data_to_bd(secondary_table_data):
@@ -49,10 +49,14 @@ def _import_main_data_to_bd(df):
                 install_time=datetime.strptime(row_data[1], date_format),
                 event_time=datetime.strptime(row_data[2], date_format),
             )
-            event_type = EventType.query.filter_by(name=row_data[7]).first()
-            media_source = MediaSource.query.filter_by(name=row_data[4]).first()
-            campaign = Company.query.filter_by(name=row_data[5]).first()
-            platform = Platform.query.filter_by(name=row_data[6]).first()
+            event_type = EventType.query.filter_by(name=row_data[7]).first()\
+                if row_data[7] is not None else None
+            media_source = MediaSource.query.filter_by(name=row_data[4]).first()\
+                if row_data[4] is not None else None
+            campaign = Company.query.filter_by(name=row_data[5]).first()\
+                if row_data[5] is not None else None
+            platform = Platform.query.filter_by(name=row_data[6]).first()\
+                if row_data[6] is not None else None
             
             
             if event_type is not None:
@@ -75,7 +79,7 @@ def _import_main_data_to_bd(df):
     return True
 
 def upload_file():
-    """ Обработчик загрузки страницы импорта csv-файлов"""
+    """Обработчик загрузки страницы импорта csv-файлов"""
     if request.method == 'POST':
         file = request.files['file']
         if file and allowed_file(file.filename):
@@ -112,7 +116,7 @@ def upload_file():
         return render_template('import_csv.html')
 
 def show_dashboard(app):
-    """ Обработчик загрузки страницы генерации отчетов"""
+    """Обработчик загрузки страницы генерации отчетов"""
     data = None
     media_sources = None
     companies = None
