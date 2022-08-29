@@ -50,13 +50,13 @@ def _import_main_data_to_bd(df):
                 event_time=datetime.strptime(row_data[2], date_format),
             )
             event_type = EventType.query.filter_by(name=row_data[7]).first()\
-                if row_data[7] is not None else None
+                if (row_data[7] is not None and str(row_data[7]) != 'nan') else None
             media_source = MediaSource.query.filter_by(name=row_data[4]).first()\
-                if row_data[4] is not None else None
+                if (row_data[4] is not None and str(row_data[4]) != 'nan') else None
             campaign = Company.query.filter_by(name=row_data[5]).first()\
-                if row_data[5] is not None else None
+                if (row_data[5] is not None and str(row_data[5]) != 'nan') else None
             platform = Platform.query.filter_by(name=row_data[6]).first()\
-                if row_data[6] is not None else None
+                if (row_data[6] is not None and str(row_data[6]) != 'nan') else None
             
             
             if event_type is not None:
