@@ -10,5 +10,4 @@ RUN pip install importlib_metadata pandas psycopg2-binary debugpy
 RUN pip install pipenv && pipenv install --system
 
 COPY ./app /home/python/app/
-# CMD [ "flask", "run", "-h", "0.0.0.0", "-p", "5000"]
 CMD ["python", "-m", "debugpy", "--wait-for-client", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "-h", "0.0.0.0", "-p", "5000"]

@@ -8,6 +8,7 @@ services:
       dockerfile: ./Dockerfile
     env_file:
       - .env_file
+    command: bash -c "flask run -h 0.0.0.0 -p 5000"
     volumes:
       - ./app:/home/python/app
     links:
