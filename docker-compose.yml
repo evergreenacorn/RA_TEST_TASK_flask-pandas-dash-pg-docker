@@ -44,4 +44,4 @@ networks:
   testtaskflask-api:
 
 volumes:
-  pg_data_volume
+  pg_data_volume:
