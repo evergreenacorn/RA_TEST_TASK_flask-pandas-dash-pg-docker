@@ -1,0 +1,47 @@
+version: '3.4'
+
+services:
+  flaskapp:
+    container_name: testtaskflask_app
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env_file
+    volumes:
+      - ./app:/home/python/app
+    # command: bash -c "flask db init && flask db migrate && flask db upgrade"
+    command: >
+      flask db init &&
+      flask db migrate &&
+      flask db upgrade &&
+      bash -c "flask run -h 0.0.0.0 --no-debugger"
+    links:
+      - flaskdb
+    depends_on:
+      - flaskdb
+    ports:
+      - 5000:5000
+    networks:
+      - testtaskflask-api
+
+
+  flaskdb:
+    container_name: testtaskflask_db
+    env_file:
+      - .env_psql
+    image: postgres:latest
+    restart: "on-failure"
+    ports:
+      - 5432:5432
+    networks:
+      - testtaskflask-api
+    volumes:
+      - pg_data_volume:/var/lib/postgresql/data
+
+
+networks:
+  testtaskflask-api:
+
+volumes:
+  pg_data_volume
