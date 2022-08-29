@@ -1,0 +1,6 @@
+__pycache__
+migrations
+*.pyc
+*.sqlite3
+app.sqlite3
+.pytest_cache
