@@ -9,7 +9,7 @@ from dash import html, dcc
 from dash.dependencies import Output, Input
 import os
 
-#  Вспомогательная функция для view: upload_file
+
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in current_app.config['ALLOWED_EXTENSIONS']
@@ -147,7 +147,7 @@ def show_dashboard(app):
     
     filters_list = render_dashboard_filters(media_sources, companies, platforms)
 
-    app.layout = html.Div(
+    return html.Div(
         children=[
             # Navbar
             html.Nav(
@@ -163,13 +163,20 @@ def show_dashboard(app):
             ),
             
             # Filters
-            html.Div(children=filters_list, className='row', id="dashboard-filters"),
+            html.Div(
+                children=filters_list,
+                className='row',
+                id="dashboard-filters"
+            ),
 
             # Table
-            html.Div(html.Div(
-                children=table,
-                className='col-12', id="dashboard-table"
-            ), className="row"),
+            html.Div(
+                html.Div(
+                    children=table,
+                    className='col-12', id="dashboard-table"
+                ),
+                className="row"
+            ),
 
         ], 
         className='container-fluid'
@@ -240,4 +247,4 @@ def reset_filters(app):
                     platforms = db.session.query(Platform).all()
                 return render_dashboard_filters(media_sources, companies, platforms) 
         else:
-            return render_dashboard_filters(None, None, None) 
+            return render_dashboard_filters(None, None, None)

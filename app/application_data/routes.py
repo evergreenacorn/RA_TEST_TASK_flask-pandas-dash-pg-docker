@@ -30,7 +30,7 @@ def configure_styles():
     ]
 
 def configure_dashboard(app):
-    show_dashboard(app)
+    return show_dashboard(app)
     
 def configure_dashboard_callbacks(app):
     filter_table(app)  # обновление таблицы согласно филтрам(бэкенд)

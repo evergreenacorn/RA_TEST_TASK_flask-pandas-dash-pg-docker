@@ -6,7 +6,7 @@ from application_data.routes import configure_apis, configure_dashboard, configu
 server = create_server()
 configure_apis(server)
 app = create_app_from_server(server, stylesheets=configure_styles())
-configure_dashboard(app)
+app.layout = configure_dashboard(app)
 configure_dashboard_callbacks(app)
 app = app.server
 
