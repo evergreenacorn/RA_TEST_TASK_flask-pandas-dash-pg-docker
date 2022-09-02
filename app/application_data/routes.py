@@ -1,4 +1,9 @@
-from .views import index, upload_file, show_dashboard, filter_table, Output, Input
+from .views import (
+    index, upload_file, show_dashboard,
+    filter_table, reset_filters,
+    Output, Input
+)
+
 
 def configure_apis(app):
     
@@ -28,5 +33,5 @@ def configure_dashboard(app):
     show_dashboard(app)
     
 def configure_dashboard_callbacks(app):
-    filter_table(app)
-        
+    filter_table(app)  # обновление таблицы согласно филтрам(бэкенд)
+    reset_filters(app)  # сброс значений фильтров

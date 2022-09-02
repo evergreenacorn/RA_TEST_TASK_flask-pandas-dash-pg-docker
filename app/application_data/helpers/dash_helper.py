@@ -107,8 +107,17 @@ def render_dashboard_filters(media_sources, companies, platforms, datetime_fmt="
                         searchable=False,
                         className="dropdown",
                     ),
-                ], className='col-3'
+                ], className='col-2'
             ),
+            
+            html.Div(
+                children=[
+                    html.Div(children="Сброс"),
+                    html.Button(
+                        children="(!)", id="reset-button", 
+                    )
+                ], className="col-1"
+            )
         ]
     else:
         return [
@@ -122,6 +131,16 @@ def render_dashboard_filters(media_sources, companies, platforms, datetime_fmt="
                         start_date=datetime.strptime('2022-01-01 0:0:0', datetime_fmt),
                         end_date=datetime.now().strftime(datetime_fmt),
                     ),
-                ], className='col-3'
+                
+                ],
+                className='col-3'
+            ),
+            
+            html.Div(
+                children=[
+                    html.Div(children="Сброс"),
+                    html.Button(children="(!)", id="reset-button")
+                ],
+                className="col-1"
             )
         ]

@@ -144,6 +144,7 @@ def show_dashboard(app):
         platforms = db.session.query(Platform).all()
 
     table = render_dashboard_table(data)
+    
     filters_list = render_dashboard_filters(media_sources, companies, platforms)
 
     app.layout = html.Div(
@@ -162,7 +163,7 @@ def show_dashboard(app):
             ),
             
             # Filters
-            html.Div(children=filters_list, className='row'),
+            html.Div(children=filters_list, className='row', id="dashboard-filters"),
 
             # Table
             html.Div(html.Div(
@@ -173,6 +174,7 @@ def show_dashboard(app):
         ], 
         className='container-fluid'
     )
+
 
 def filter_table(app):
     @app.callback(
@@ -219,3 +221,23 @@ def filter_table(app):
                         
         table = render_dashboard_table(data)
         return table  # , mediasource_value, company_value, platform_value
+
+ 
+def reset_filters(app):
+    @app.callback(
+        Output("dashboard-filters", "children"),
+        Input("reset-button", "n_clicks")
+    )
+    def reset_btn_callback(n_clicks):
+        if n_clicks:
+            if n_clicks >= 1:
+                n_clicks = 0
+
+                with app.server.app_context():
+                    db.create_all()
+                    media_sources = db.session.query(MediaSource).all()
+                    companies = db.session.query(Company).all()
+                    platforms = db.session.query(Platform).all()
+                return render_dashboard_filters(media_sources, companies, platforms) 
+        else:
+            return render_dashboard_filters(None, None, None) 
