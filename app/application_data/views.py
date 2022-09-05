@@ -2,7 +2,11 @@ from flask import request, render_template, redirect, url_for, current_app, flas
 from sqlalchemy import select, func
 from werkzeug.utils import secure_filename
 from .models import Event, EventType, Company, MediaSource, Platform
-from .helpers import CsvImporter, DataframeImporter, render_dashboard_table, render_dashboard_filters
+from .helpers import (
+    CsvImporter, DataframeImporter,
+    render_dashboard_table, render_dashboard_filters,
+    is_not_none_and_not_eq
+)
 from application_data import db
 from datetime import datetime
 from dash import html, dcc
@@ -49,24 +53,27 @@ def _import_main_data_to_bd(df):
                 install_time=datetime.strptime(row_data[1], date_format),
                 event_time=datetime.strptime(row_data[2], date_format),
             )
-            event_type = EventType.query.filter_by(name=row_data[7]).first()\
-                if (row_data[7] is not None and str(row_data[7]) != 'nan') else None
-            media_source = MediaSource.query.filter_by(name=row_data[4]).first()\
-                if (row_data[4] is not None and str(row_data[4]) != 'nan') else None
-            campaign = Company.query.filter_by(name=row_data[5]).first()\
-                if (row_data[5] is not None and str(row_data[5]) != 'nan') else None
-            platform = Platform.query.filter_by(name=row_data[6]).first()\
-                if (row_data[6] is not None and str(row_data[6]) != 'nan') else None
             
             
-            if event_type is not None:
-                new_event.type_id = event_type.id
-            if media_source is not None:
-                new_event.mediasource_id = media_source.id
-            if campaign is not None:
-                new_event.company_id = campaign.id
-            if platform is not None:
-                new_event.platform_id = platform.id
+            secondary_data_tbls = {
+                x: y for x, y in (
+                    ("event_type", EventType.query.filter_by(name=row_data[7]).first()\
+                        if is_not_none_and_not_eq(row_data[7], not_eq="nan") else None),
+
+                    ("mediasource", MediaSource.query.filter_by(name=row_data[4]).first()\
+                        if is_not_none_and_not_eq(row_data[4], not_eq="nan") else None),
+
+                    ("company", Company.query.filter_by(name=row_data[5]).first()\
+                        if is_not_none_and_not_eq(row_data[5], not_eq="nan") else None),
+
+                    ("platform", Platform.query.filter_by(name=row_data[6]).first()\
+                        if is_not_none_and_not_eq(row_data[6], not_eq="nan") else None),
+                )
+            }
+
+            for _key, _val in secondary_data_tbls.items():
+                if is_not_none_and_not_eq(_val):
+                    setattr(new_event, "%s_id" % _key, _val)
 
             new_events.append(new_event)
 
@@ -128,6 +135,7 @@ def show_dashboard(app):
             
             func.count(Event.type_id).label("installs_count"),
             func.sum(Event.revenue).label("total_revenue")
+
         ).join(
             EventType,
             MediaSource,
@@ -151,35 +159,43 @@ def show_dashboard(app):
         children=[
             # Navbar
             html.Nav(
-                children=html.Div(
-                    children=html.A(
-                        children="Домой",
-                        href="/",
-                        className="navbar-brand"
+                html.Div(
+                    html.Div(
+                        html.A(
+                            "Домой",
+                            href="/",
+                            className="navbar-brand"
+                        ),
+                        className="row"
                     ),
-                    className="row"
+                    className='container-fluid'
                 ),
                 className="navbar navbar-dark bg-primary"
             ),
             
             # Filters
             html.Div(
-                children=filters_list,
-                className='row',
-                id="dashboard-filters"
+                html.Div(
+                    children=filters_list,
+                    className='row',
+                    id="dashboard-filters"),
+                className='container-fluid'
             ),
 
             # Table
             html.Div(
                 html.Div(
-                    children=table,
-                    className='col-12', id="dashboard-table"
+                    html.Div(
+                        children=table,
+                        className='col-12', id="dashboard-table"
+                    ),
+                    className="row"
                 ),
-                className="row"
+                className='container-fluid'
             ),
 
         ], 
-        className='container-fluid'
+        # className='container-fluid'
     )
 
 
@@ -217,12 +233,16 @@ def filter_table(app):
                 end_date = datetime.strptime(end_date, inp_date_fmt)
                 data = data.filter(Event.event_time >= start_date).\
                     filter(Event.event_time <= end_date)
-            if mediasource_value and mediasource_value != '':
-                data = data.filter(Event.mediasource_id == mediasource_value)
-            if company_value and company_value != '':
-                data = data.filter(Event.company_id == company_value)
-            if platform_value and platform_value != '':
-                data = data.filter(Event.platform_id == platform_value)
+            
+            for _val, _id in (
+                (mediasource_value, Event.mediasource_id),
+
+                (company_value, Event.company_id),
+
+                (platform_value, Event.platform_id)
+            ):
+                if is_not_none_and_not_eq(_val):
+                    data = data.filter(_id == _val)
             
             data = data.group_by('company_name').all()
                         
@@ -236,15 +256,11 @@ def reset_filters(app):
         Input("reset-button", "n_clicks")
     )
     def reset_btn_callback(n_clicks):
-        if n_clicks:
-            if n_clicks >= 1:
-                n_clicks = 0
-
-                with app.server.app_context():
-                    db.create_all()
-                    media_sources = db.session.query(MediaSource).all()
-                    companies = db.session.query(Company).all()
-                    platforms = db.session.query(Platform).all()
+        with app.server.app_context():
+            db.create_all()
+            media_sources = db.session.query(MediaSource).all()
+            companies = db.session.query(Company).all()
+            platforms = db.session.query(Platform).all()
+            if all((media_sources, companies, platforms)):
                 return render_dashboard_filters(media_sources, companies, platforms) 
-        else:
             return render_dashboard_filters(None, None, None)
