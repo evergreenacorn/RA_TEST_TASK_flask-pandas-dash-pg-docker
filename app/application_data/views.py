@@ -194,8 +194,7 @@ def show_dashboard(app):
                 className='container-fluid'
             ),
 
-        ], 
-        # className='container-fluid'
+        ],
     )
 
 
