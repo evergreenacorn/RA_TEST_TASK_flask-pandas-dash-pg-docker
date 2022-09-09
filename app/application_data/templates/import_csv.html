@@ -6,25 +6,28 @@
 
 
 {% block content %}
-<div class="row">
-    <h1>Это страница импорта CSV-файла</h1>
-</div>
-<div class="row">
-    <div class="col-6">
-        
-        <form enctype="multipart/form-data" method="post">
-            <div class="row">
-                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                <label for="formFileLg" class="form-label">Выберите файл</label>
-                <input class="form-control form-control-lg" id="formFileLg" type="file" name="file">
-            </div>
-
-            <div class="row">
-                <input type="submit" value="Загрузить" class="btn btn-primary">
-            <!-- <input type="file" name="file"> -->
-            </div>
-        
-        </form>
+<div class="container-fluid">
+    <div class="row">
+        <h1>Это страница импорта CSV-файла</h1>
     </div>
+
+    <div class="row">
+    
+        <div class="col-6"> 
+            <form enctype="multipart/form-data" method="post">
+                {{ form.csrf_token }}
+                <div class="input-group">
+                    <input type="file" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Загрузка" name="file">
+                    <input type="submit" value="Загрузить" class="btn btn-primary">
+                </div>
+                <div class="input-group">
+                    {% for error in form.file.errors %}
+                        <small class="text-danger">{{ error }}</small>  
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 {% endblock content %}
