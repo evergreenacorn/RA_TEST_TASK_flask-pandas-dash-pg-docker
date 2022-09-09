@@ -7,6 +7,7 @@ from .helpers import (
     render_dashboard_table, render_dashboard_filters,
     is_not_none_and_not_eq
 )
+from .forms import CsvImporterForm
 from application_data import db
 from datetime import datetime
 from dash import html, dcc
@@ -26,14 +27,19 @@ def _import_secondary_data_to_bd(secondary_table_data):
     db.create_all()
     secondary_tables = (EventType, Company, MediaSource, Platform)
 
+    insertion_list = []
     for _ in secondary_tables:
         data = list(secondary_table_data[_.__tablename__])
-        exists_data = _.query.filter(_.name.in_(data))
+        exists_data = [getattr(x, 'name') for x in _.query.filter(_.name.in_(data)).all()]
         not_exists_data = list(set(data) - set(exists_data))
 
-        values_to_insert = [_(name=val) for val in not_exists_data]
+        if len(not_exists_data) > 0:
+            values_to_insert = [_(name=val) for val in not_exists_data]
+            insertion_list += values_to_insert
+
+    if len(insertion_list) > 0:
         try:
-            db.session.add_all(values_to_insert)
+            db.session.add_all(insertion_list)
             db.session.commit()
         except Exception:
             db.session.rollback()
@@ -54,10 +60,9 @@ def _import_main_data_to_bd(df):
                 event_time=datetime.strptime(row_data[2], date_format),
             )
             
-            
             secondary_data_tbls = {
                 x: y for x, y in (
-                    ("event_type", EventType.query.filter_by(name=row_data[7]).first()\
+                    ("type", EventType.query.filter_by(name=row_data[7]).first()\
                         if is_not_none_and_not_eq(row_data[7], not_eq="nan") else None),
 
                     ("mediasource", MediaSource.query.filter_by(name=row_data[4]).first()\
@@ -72,8 +77,9 @@ def _import_main_data_to_bd(df):
             }
 
             for _key, _val in secondary_data_tbls.items():
-                if is_not_none_and_not_eq(_val):
-                    setattr(new_event, "%s_id" % _key, _val)
+                name_val = getattr(_val, 'name', None)
+                if is_not_none_and_not_eq(name_val):
+                    setattr(new_event, "%s_id" % _key, _val.id)
 
             new_events.append(new_event)
 
@@ -87,12 +93,11 @@ def _import_main_data_to_bd(df):
 
 def upload_file():
     """Обработчик загрузки страницы импорта csv-файлов"""
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            
-            csv_df = CsvImporter(file)
+    form = CsvImporterForm()
+
+    if request.method == 'POST':        
+        if form.validate_on_submit():
+            csv_df = CsvImporter(form.file.data)
             
             models_map = {
                 "media_source": MediaSource,
@@ -119,8 +124,7 @@ def upload_file():
             flash(message)
             return redirect(url_for('index'))
 
-    if request.method == 'GET':
-        return render_template('import_csv.html')
+    return render_template('import_csv.html', form=form)
 
 def show_dashboard(app):
     """Обработчик загрузки страницы генерации отчетов"""
@@ -137,12 +141,7 @@ def show_dashboard(app):
             func.sum(Event.revenue).label("total_revenue")
 
         ).join(
-            EventType,
-            MediaSource,
-            Company,
-            Platform
-        ).filter(
-            EventType.name == 'install'
+            Event
         ).group_by(
             'company_name'
         ).all()
@@ -219,12 +218,7 @@ def filter_table(app):
                 func.count(Event.type_id).label("installs_count"),
                 func.sum(Event.revenue).label("total_revenue")
             ).join(
-                EventType,
-                MediaSource,
-                Company,
-                Platform
-            ).filter(
-                EventType.name == 'install'
+                Event
             )
             
             if all([start_date, end_date]):
