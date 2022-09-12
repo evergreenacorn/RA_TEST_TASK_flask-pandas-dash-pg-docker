@@ -3,7 +3,7 @@ from sqlalchemy import select, func
 from werkzeug.utils import secure_filename
 from .models import Event, EventType, Company, MediaSource, Platform
 from .helpers import (
-    CsvImporter, DataframeImporter,
+    CsvImporter,
     render_dashboard_table, render_dashboard_filters,
     is_not_none_and_not_eq
 )
@@ -97,7 +97,7 @@ def upload_file():
 
     if request.method == 'POST':        
         if form.validate_on_submit():
-            csv_df = CsvImporter(form.file.data)
+            # csv_df = CsvImporter(form.file.data)
             
             models_map = {
                 "media_source": MediaSource,
@@ -107,8 +107,8 @@ def upload_file():
             }
             main_model = Event
             
-            df = DataframeImporter(
-                csv_df.df,
+            df = CsvImporter(
+                form.file.data,
                 models_map=models_map,
                 main_model=main_model
             )
